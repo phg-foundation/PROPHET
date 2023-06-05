@@ -1,13 +1,7 @@
 ---
-title: "Code to generate final diagrams for PROPHET report 2023"
+title: "Codes to generate final diagrams for PROPHET report 2023"
 output: html_notebook
 ---
-
-#####################################################################################
-Please double check the values (column names & row names) in this code are applicable. 
-Data extraction forms between CVD, cancer and neuro differ.
-#####################################################################################
-
 
 
 Create a new folder to hold all the results generated from this code
