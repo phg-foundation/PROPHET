@@ -135,6 +135,10 @@ for(i in 1:4){
 
 all_data_sub <- all_data_sub %>% mutate(primary_lifestyle_factors_type = if_else(str_detect(primary_lifestyle_factors, "Other") == T, 
                                                  "Other", primary_lifestyle_factors))
+                                                 
+#remove any white spaces
+all_data_sub <- all_data_sub %>% mutate(across(where(is.character), str_trim)) %>%
+  filter(biomarker_subcategory != "")
 ```
 
 
@@ -157,9 +161,7 @@ all_data_sub <- all_data_sub %>% mutate(cvd_type_orig = cvd_type) %>%
          biomarker_subcategory = str_replace(biomarker_subcategory, "Other celular biomarker", "Other cellular biomarker"),
          biomarker_subcategory = str_replace(biomarker_subcategory, "Electromyography", "Electro- myography"))
 
-#remove any white spaces
-all_data_sub <- all_data_sub %>% mutate(across(where(is.character), str_trim)) %>%
-  filter(biomarker_subcategory != "")
+
 ```
 
 
@@ -453,24 +455,41 @@ x-axis = disease type
 color of bubble = biomarker category
 
 ```{r}
-#level 5
-##population vs disease - bubble plot filled with biomarker category
-
+#primary
 pdf("data_analysis_results/population_disease_bubbleplot_primary.pdf", width = 18, height = 13)
+
+fin_rownames <- secondary_data %>% dplyr::select(population_type)
+fin_rownames <- as.vector(unique(fin_rownames$population_type)) %>% sort(.) #check all row names for table captured
+fin_colnames <- fin_colnames
+#template to fill
+fin_dataframe <- expand.grid(fin_rownames, fin_colnames) %>% as.data.frame() %>% setNames(c("population_type", "cvd_type")) %>% 
+  mutate(biomarker_category = ".", match_column = paste(population_type, cvd_type, sep = "_"))
+########
+
 plot_data <- primary_data %>% dplyr::select(covidence_id, biomarker_category, cvd_type, population_type) %>% unique() %>%
-  dplyr::select(-covidence_id) %>% group_by(cvd_type, population_type, biomarker_category) %>% summarise(count = n()) %>%
+  dplyr::select(-covidence_id) %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
+fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
+plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column)
+
+plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
+plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
+
+
+plot_data <- plot_data %>% group_by(cvd_type, population_type, biomarker_category) %>% summarise(count = n()) %>%
   arrange(cvd_type, population_type, biomarker_category) %>%
   mutate(xcord = case_when(biomarker_category == "Molecular" ~ 3.5,
                            biomarker_category == "Cellular" ~ 1.5,
                            biomarker_category == "Imaging" ~ 3.5,
                            biomarker_category == "Physiological" ~ 1.5,
-                           biomarker_category == "Anthropometric" ~ 2.5),
+                           biomarker_category == "Anthropometric" ~ 2.5,
+                           TRUE ~ 1),
          ycord = case_when(biomarker_category == "Molecular" ~ 1.5,
                            biomarker_category == "Cellular" ~ 2.5,
                            biomarker_category == "Imaging" ~ 3.5,
                            biomarker_category == "Physiological" ~ 2.5,
-                           biomarker_category == "Anthropometric" ~ 3.5))
-plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c("Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
+                           biomarker_category == "Anthropometric" ~ 3.5,
+                           TRUE ~ 1))
+plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c(".", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
 plot_data$cvd_type <- factor(plot_data$cvd_type, levels = fin_colnames)
 plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n")) %>% 
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
@@ -484,27 +503,40 @@ plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n"))
         strip.text.y = element_text(angle = 90), panel.spacing=unit(0, "lines"), 
         panel.background = element_rect(fill = "white")) + 
   scale_size(range = c(2,20), name = "Number of studies", breaks = c(1, 50, 100, 150), limits = c(1,155)) + 
-  scale_colour_manual(name = "Type of biomarkers", values = c("#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050")) +
-  scale_fill_manual(name = "Type of biomarkers", values = c("#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050")) +
-  guides(colour = guide_legend(override.aes = list(size = 5)))
+  scale_colour_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
+                      labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
+  scale_fill_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
+                    labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
+  guides(colour = guide_legend(override.aes = list(size = 5), order = 1), fill = guide_legend(order = 1),
+         size = guide_legend(order = 2))
 dev.off()
 
-
+#secondary
 pdf("data_analysis_results/population_disease_bubbleplot_secondary.pdf", width = 18, height = 13)
 plot_data <- secondary_data %>% dplyr::select(covidence_id, biomarker_category, cvd_type, population_type) %>% unique() %>%
-  dplyr::select(-covidence_id) %>% group_by(cvd_type, population_type, biomarker_category) %>% summarise(count = n()) %>%
+  dplyr::select(-covidence_id) %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
+fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
+plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column)
+
+plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
+plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
+
+
+plot_data <- plot_data %>% group_by(cvd_type, population_type, biomarker_category) %>% summarise(count = n()) %>%
   arrange(cvd_type, population_type, biomarker_category) %>%
   mutate(xcord = case_when(biomarker_category == "Molecular" ~ 3.5,
                            biomarker_category == "Cellular" ~ 1.5,
                            biomarker_category == "Imaging" ~ 3.5,
                            biomarker_category == "Physiological" ~ 1.5,
-                           biomarker_category == "Anthropometric" ~ 2.5),
+                           biomarker_category == "Anthropometric" ~ 2.5,
+                           TRUE ~ 1),
          ycord = case_when(biomarker_category == "Molecular" ~ 1.5,
                            biomarker_category == "Cellular" ~ 2.5,
                            biomarker_category == "Imaging" ~ 3.5,
                            biomarker_category == "Physiological" ~ 2.5,
-                           biomarker_category == "Anthropometric" ~ 3.5))
-plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c("Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
+                           biomarker_category == "Anthropometric" ~ 3.5,
+                           TRUE ~ 1))
+plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c(".", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
 plot_data$cvd_type <- factor(plot_data$cvd_type, levels = fin_colnames)
 plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n")) %>% 
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
@@ -518,9 +550,12 @@ plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n"))
         strip.text.y = element_text(angle = 90), panel.spacing=unit(0, "lines"), 
         panel.background = element_rect(fill = "white")) + 
   scale_size(range = c(2,20), name = "Number of studies", breaks = c(1, 50, 100, 150), limits = c(1,155)) + 
-  scale_colour_manual(name = "Type of biomarkers", values = c("#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050")) +
-  scale_fill_manual(name = "Type of biomarkers", values = c("#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050")) +
-  guides(colour = guide_legend(override.aes = list(size = 5)))
+  scale_colour_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
+                      labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
+  scale_fill_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
+                    labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
+  guides(colour = guide_legend(override.aes = list(size = 5), order = 1), fill = guide_legend(order = 1),
+         size = guide_legend(order = 2))
 dev.off()
 
 ```
