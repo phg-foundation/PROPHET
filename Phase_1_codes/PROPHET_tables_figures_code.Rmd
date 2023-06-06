@@ -154,7 +154,8 @@ all_data_sub <- all_data_sub %>% mutate(cvd_type_orig = cvd_type) %>%
                                        TRUE ~ "Cross-sectional study"),
          population_type = if_else(population_type == "CVD", "High risk CVD", population_type),
          biomarker_subcategory = str_replace(biomarker_subcategory, "Hystology", "Histology"),
-         biomarker_subcategory = str_replace(biomarker_subcategory, "Other celular biomarker", "Other cellular biomarker"))
+         biomarker_subcategory = str_replace(biomarker_subcategory, "Other celular biomarker", "Other cellular biomarker"),
+         biomarker_subcategory = str_replace(biomarker_subcategory, "Electromyography", "Electro- myography"))
 
 #remove any white spaces
 all_data_sub <- all_data_sub %>% mutate(across(where(is.character), str_trim)) %>%
@@ -310,7 +311,8 @@ for(i in seq(1,5,1)){
     dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(biomarkers, cvd_type, sep = "_"))
   fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
   plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., biomarkers ~ cvd_type, value.var = "Freq") %>%
-    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_")
+    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") %>%
+    mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n"))
   plot_data <- plot_data %>% arrange(`Biomarker Category`, `Biomarker Subcategory`) %>% filter(`Biomarker Category` == bio_catgs[i]) %>%
     dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames))
   null_columns <- plot_data %>% dplyr::select(-c(`Biomarker Category`, `Biomarker Subcategory`)) %>% colSums() %>% as.data.frame() %>% 
@@ -327,7 +329,8 @@ for(i in seq(1,5,1)){
     dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(biomarkers, cvd_type, sep = "_"))
   fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
   plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., biomarkers ~ cvd_type, value.var = "Freq") %>%
-    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_")
+    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") %>%
+    mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n"))
   plot_data <- plot_data %>% arrange(`Biomarker Category`, `Biomarker Subcategory`) %>% filter(`Biomarker Category` == bio_catgs[i]) %>%
     dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames))
   null_columns <- plot_data %>% dplyr::select(-c(`Biomarker Category`, `Biomarker Subcategory`)) %>% colSums() %>% as.data.frame() %>% 
