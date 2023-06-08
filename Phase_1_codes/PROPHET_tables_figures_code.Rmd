@@ -57,6 +57,9 @@ Data cleaning
 ```{r}
 all_data[all_data == ""] <- NA #replace empty cells with NA which is program recognizable
 
+#only for cancer and neuro because of differnces in data extraction format:
+#all_data[all_data == "N/P"] <- NA
+
 all_data <- all_data %>% mutate(across(where(is.character), str_trim)) #remove white spaces from start and end of every cell
 
 #make responses as only Yes or No:
