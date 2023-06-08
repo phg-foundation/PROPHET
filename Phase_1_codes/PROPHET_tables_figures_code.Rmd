@@ -433,13 +433,16 @@ plot_data %>% mutate(primary_lifestyle_factors_type = str_replace(primary_lifest
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
   facet_grid(primary_lifestyle_factors_type ~ cvd_type, switch = "y", 
              labeller = labeller(primary_lifestyle_factors_type = label_wrap_gen(11), cvd_type = label_wrap_gen(14))) + 
-  xlim(0,5) + ylim(0,5) + labs(x = "", y = "") + theme_void(base_family = "", base_size = 15) + 
+  xlim(0,5) + ylim(0,5) + labs(x = "", y = "") + theme_classic(base_family = "", base_size = 15) + 
   theme(legend.text = element_text(size = 14), legend.title = element_text(size = 14), 
         panel.border = element_rect(colour = "grey75", fill=NA, linewidth = 0.5), 
         strip.background = element_rect(fill = alpha("#2F6687", 0.95), colour = "white"),
         strip.text = element_text(colour = "grey95", face = "bold", size = 14), 
         strip.text.y = element_text(angle = 90), panel.spacing=unit(0, "lines"), 
-        panel.background = element_rect(fill = "white")) + 
+        panel.background = element_rect(fill = "white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.line = element_blank()) + 
   scale_size(range = c(2,20), name = "Number of studies", breaks = c(1, 50, 100, 150), limits = c(1,155)) + 
   scale_colour_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
                       labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
@@ -498,13 +501,16 @@ plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n"))
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
   facet_grid(population_type ~ cvd_type, switch = "y", 
              labeller = labeller(population_type = label_wrap_gen(11), cvd_type = label_wrap_gen(14))) + 
-  xlim(0,5) + ylim(0,5) + labs(x = "", y = "") + theme_void(base_family = "", base_size = 15) + 
+  xlim(0,5) + ylim(0,5) + labs(x = "", y = "") + theme_classic(base_family = "", base_size = 15) + 
   theme(legend.text = element_text(size = 14), legend.title = element_text(size = 14), 
         panel.border = element_rect(colour = "grey75", fill=NA, linewidth = 0.5), 
         strip.background = element_rect(fill = alpha("#2F6687", 0.95), colour = "white"),
         strip.text = element_text(colour = "grey95", face = "bold", size = 14), 
         strip.text.y = element_text(angle = 90), panel.spacing=unit(0, "lines"), 
-        panel.background = element_rect(fill = "white")) + 
+        panel.background = element_rect(fill = "white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.line = element_blank()) + 
   scale_size(range = c(2,20), name = "Number of studies", breaks = c(1, 50, 100, 150), limits = c(1,155)) + 
   scale_colour_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
                       labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
@@ -545,13 +551,16 @@ plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n"))
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
   facet_grid(population_type ~ cvd_type, switch = "y", 
              labeller = labeller(population_type = label_wrap_gen(11), cvd_type = label_wrap_gen(14))) + 
-  xlim(0,5) + ylim(0,5) + labs(x = "", y = "") + theme_void(base_family = "", base_size = 15) + 
+  xlim(0,5) + ylim(0,5) + labs(x = "", y = "") + theme_classic(base_family = "", base_size = 15) + 
   theme(legend.text = element_text(size = 14), legend.title = element_text(size = 14), 
         panel.border = element_rect(colour = "grey75", fill=NA, linewidth = 0.5), 
         strip.background = element_rect(fill = alpha("#2F6687", 0.95), colour = "white"),
         strip.text = element_text(colour = "grey95", face = "bold", size = 14), 
         strip.text.y = element_text(angle = 90), panel.spacing=unit(0, "lines"), 
-        panel.background = element_rect(fill = "white")) + 
+        panel.background = element_rect(fill = "white"),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.line = element_blank()) +  
   scale_size(range = c(2,20), name = "Number of studies", breaks = c(1, 50, 100, 150), limits = c(1,155)) + 
   scale_colour_manual(name = "Type of biomarkers", values = c("white", "#103B61", "#0072B2", "#56B4E9", "#ACC578", "#FBD050"),
                       labels = c("", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric")) +
