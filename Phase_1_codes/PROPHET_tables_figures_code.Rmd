@@ -576,6 +576,52 @@ dev.off()
 Supplementary files
 
 Create table format: 
+y-axis = population type
+x-axis = disease type
+
+```{r}
+#primary
+fin_rownames <- as.vector(unique(all_data_sub$population_type)) %>% sort(.)
+fin_colnames <- fin_colnames
+#template to fill
+fin_dataframe <- expand.grid(fin_rownames, fin_colnames) %>% as.data.frame() %>% setNames(c("population_type", "cvd_type")) %>% 
+  mutate(Freq = 0, match_column = paste(population_type, cvd_type, sep = "_"))
+########
+
+plot_data <- primary_data %>% dplyr::select(covidence_id, population_type, cvd_type) %>% unique() %>%
+  dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
+fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
+plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., population_type ~ cvd_type, value.var = "Freq") %>% column_to_rownames("population_type")
+
+plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
+plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
+
+null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
+  setNames("zeros") %>% filter(zeros == 0)
+
+table_n_col(data = plot_data, null_column_name =  null_columns,  should_group = F, table_width = 1700, num_colors = 5, 
+            table_name = "Population vs \n CVDs", output_name = "population_disease_primary")
+##might not always print correctly - please do control+P of the html page produced to save as pdf
+
+
+
+#secondary
+plot_data <- secondary_data %>% dplyr::select(covidence_id, population_type, cvd_type) %>% unique() %>%
+  dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
+fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
+plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., population_type ~ cvd_type, value.var = "Freq") %>% column_to_rownames("population_type")
+
+plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
+plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
+
+null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
+  setNames("zeros") %>% filter(zeros == 0)
+
+table_n_col(data = plot_data, null_column_name =  null_columns,  should_group = F, table_width = 1700, num_colors = 5, 
+            table_name = "Population vs \n CVDs", output_name = "population_disease_secondary")
+```
+
+Create table format: 
 y-axis = novel technology
 x-axis = disease type
 
