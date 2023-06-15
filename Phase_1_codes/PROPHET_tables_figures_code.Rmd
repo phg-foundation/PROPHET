@@ -355,7 +355,7 @@ x-axis = disease type
 ```{r}
 #primary
 fin_rownames <- all_data_sub %>% filter(primary_lifestyle_evaluated == "Yes") %>% dplyr::select(primary_lifestyle_factors_type)
-temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution", "Immunization"))
+temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution"))
 fin_rownames <- rbind(fin_rownames, temp_data)
 fin_rownames <- as.vector(unique(fin_rownames$primary_lifestyle_factors_type)) %>% sort(.) #check all row names for table captured
 fin_colnames <- fin_colnames
@@ -392,7 +392,7 @@ color of bubble = biomarker category
 ```{r}
 #primary
 fin_rownames <- all_data_sub %>% filter(primary_lifestyle_evaluated == "Yes") %>% dplyr::select(primary_lifestyle_factors_type)
-temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution", "Immunization"))
+temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution"))
 fin_rownames <- rbind(fin_rownames, temp_data)
 fin_rownames <- as.vector(unique(fin_rownames$primary_lifestyle_factors_type)) %>% sort(.) #check all row names for table captured
 fin_colnames <- fin_colnames
