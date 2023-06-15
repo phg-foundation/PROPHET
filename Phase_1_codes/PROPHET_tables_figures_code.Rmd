@@ -3,7 +3,6 @@ title: "Codes to generate final diagrams for PROPHET report 2023"
 output: html_notebook
 ---
 
-
 Create a new folder to hold all the results generated from this code
 
 ```{r}
@@ -690,5 +689,5 @@ table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_
             table_name = "Study design vs \n CVDs", output_name = "study_disease_secondary" )
 ```
 
-
+#C.Erady
 ~FIN~
