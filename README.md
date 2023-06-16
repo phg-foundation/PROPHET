@@ -1,6 +1,6 @@
 # PROPHET
 
-## Phase 1
+## Phase 1 codes
 
 __PROPHET_tables_figures_code.Rmd:__
 
