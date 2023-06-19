@@ -234,7 +234,7 @@ primary_data_final <- primary_data %>%
   mutate(across(where(is.character), str_trim)) %>%
   dplyr::select(Rows, Columns, study_design_type, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility) %>%
   setNames(c("Rows", "Columns", "Study design", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
-             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Novel technology", 
              "Clinical utility"))
 
 primary_data_final <- primary_data_final %>% 
@@ -305,7 +305,7 @@ secondary_data_final <- secondary_data %>%
   mutate(across(where(is.character), str_trim)) %>%
   dplyr::select(Rows, Columns, study_design_type, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility) %>%
   setNames(c("Rows", "Columns", "Study design", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
-             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Novel technology", 
              "Clinical utility"))
 
 secondary_data_final <- secondary_data_final %>% 
@@ -425,7 +425,7 @@ primary_data_final_bio <- primary_data %>%
   dplyr::select(Rows, Columns, biomarkers, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility, 
                 study_design_type, family_history, lifestyle, bio_subs) %>%
   setNames(c("Rows", "Columns", "Biomarker category", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
-             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Novel technology", 
              "Clinical utility", "Study design", "Family history", "Lifestyle factors", "Biomarker subcategories"))
 
 primary_data_final_bio <- primary_data_final_bio %>% 
@@ -525,7 +525,7 @@ secondary_data_final_bio <- secondary_data %>%
   dplyr::select(Rows, Columns, biomarkers, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility, 
                 study_design_type, family_history, bio_subs) %>%
   setNames(c("Rows", "Columns", "Biomarker category", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
-             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Novel technology", 
              "Clinical utility", "Study design", "Family history", "Biomarker subcategories"))
 
 secondary_data_final_bio <- secondary_data_final_bio %>% 
