@@ -201,7 +201,7 @@ Create columns using format: CVD_disease_lifestyle+population
 #matches between lifestyle and population type are for: smoking, alcohol consumption (but written as alcohol under lifestyle) & obesity 
 primary_data_cols <- primary_data %>%
   mutate(lifestyle_corrected = if_else(is.na(primary_lifestyle_factors_type) == T, "NaN", primary_lifestyle_factors_type),
-         family_corrected = if_else(family_history == "Yes", "family history", "NaN"),
+         family_corrected = if_else(family_history == "Yes", "Family history", "NaN"),
          lifestyle = paste(lifestyle_corrected, family_corrected, sep = ";"),
          pop_and_lifestyle = if_else(lifestyle_corrected != population_type, 
                                      paste(population_type, lifestyle, sep = ";"), 
@@ -275,7 +275,7 @@ secondary_data_rows <- secondary_data %>%
 Create columns using format: CVD_disease_population(+family)
 ```{r}
 secondary_data_cols <- secondary_data %>%
-  mutate(family_corrected = if_else(family_history == "Yes", "family history", "NaN"),
+  mutate(family_corrected = if_else(family_history == "Yes", "Family history", "NaN"),
          pop_and_lifestyle = paste(population_type, family_corrected, sep = ";"),
          pop_and_lifestyle = str_replace_all(pop_and_lifestyle, ";NaN", "")) %>%
   separate_rows("pop_and_lifestyle", sep = ";") %>% 
