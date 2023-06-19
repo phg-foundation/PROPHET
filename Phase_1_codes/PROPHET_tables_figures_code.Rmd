@@ -47,6 +47,13 @@ for(i in 1:length(all_data)){
 #make sure the column names generated as output from the function above are ones where NA is expected.
 #For example, when working with CVD, we except missing values under the column CANCER.Sp..Disease
 #If columns such as Mendelian randomization contain missing value, go back to Covidence and impute missing value
+
+all_data[all_data == ""] <- NA #replace empty cells with NA which is program recognizable
+
+#only for cancer and neuro because of differnces in data extraction format:
+#all_data[all_data == "N/P"] <- NA
+
+all_data <- all_data %>% mutate(across(where(is.character), str_trim)) #remove white spaces from start and end of every cell
 ```
 
 
@@ -54,13 +61,6 @@ for(i in 1:length(all_data)){
 Data cleaning
 
 ```{r}
-all_data[all_data == ""] <- NA #replace empty cells with NA which is program recognizable
-
-#only for cancer and neuro because of differnces in data extraction format:
-#all_data[all_data == "N/P"] <- NA
-
-all_data <- all_data %>% mutate(across(where(is.character), str_trim)) #remove white spaces from start and end of every cell
-
 #make responses as only Yes or No:
 
 all_data <- all_data %>%
@@ -153,16 +153,18 @@ all_data_sub <- all_data_sub %>% mutate(cvd_type_orig = cvd_type) %>%
                               cvd_type_orig == "Hypertensive heart disease" ~ "Hypertensive CVD",
                               str_detect(cvd_type_orig, "Stroke") ~ "Stroke",
                               TRUE ~ cvd_type_orig),
-         study_design_type = case_when(str_detect(study_design, "review") == T ~ "Review",
+         study_design_type = case_when(str_detect(study_design, "review") == T ~ "Umbrella/Systematic review",
                                        str_detect(study_design, "ohort") == T ~ "Cohort study",
                                        str_detect(study_design, "control") == T ~ "Case-control study",
-                                       str_detect(study_design, "RCT") == T ~ "RCT",
+                                       str_detect(study_design, "RCT") == T ~ "Randomized control trial",
                                        TRUE ~ "Cross-sectional study"),
-         population_type = if_else(population_type == "CVD", "High risk CVD", population_type),
+         population_type = if_else(population_type == "CVD", "High-risk CVD", population_type),
+         population_type = if_else(population_type == "Alcohol consumption", "Alcohol", population_type),
          biomarker_subcategory = str_replace(biomarker_subcategory, "Hystology", "Histology"),
          biomarker_subcategory = str_replace(biomarker_subcategory, "Other celular biomarker", "Other cellular biomarker"),
-         biomarker_subcategory = str_replace(biomarker_subcategory, "Electromyography", "Electro- myography"))
-
+         biomarker_subcategory = str_replace(biomarker_subcategory, "Other image biomarker", "Other imaging biomarker"),
+         biomarker_subcategory = str_replace(biomarker_subcategory, "Electromyography", "Electro- myography"),
+         primary_lifestyle_factors_type = str_replace(primary_lifestyle_factors_type, "Other", "Other lifestyle factors"))
 
 ```
 
@@ -187,11 +189,11 @@ table_n_col <- function(data, null_column_name, should_group, group_by_colname, 
   colour_plot <- colorRampPalette(brewer.pal(9, "Blues"))(num_colors)[1]
   
   if(should_group == T){
-    columns_for_plot <- rep(list(colDef(align = "center", aggregate = "sum", 
+    columns_for_plot <- rep(list(colDef(align = "center", 
                                         cell = color_tiles(plot_data, colors = colour_plot))), nrow(null_column_name))
     columns_for_plot <- columns_for_plot %>% setNames(rownames(null_column_name))
     to_save <- reactable(data, groupBy = group_by_colname,
-                       defaultColDef = colDef(align = "center", aggregate = "sum",
+                       defaultColDef = colDef(align = "center", 
                                               cell = color_tiles(data, 
                                                                  colors = colorRampPalette(brewer.pal(9, "Blues"))(num_colors))),
                        defaultPageSize = 50,
@@ -212,7 +214,7 @@ table_n_col <- function(data, null_column_name, should_group, group_by_colname, 
                                                  style = list(backgroundColor = "#2F6687",
                                                               color = "white",
                                                               fontWeight = "600")))
-    columns_for_plot <- rep(list(colDef(align = "center", aggregate = "sum", 
+    columns_for_plot <- rep(list(colDef(align = "center",  
                                         cell = color_tiles(plot_data, colors = colour_plot))), nrow(null_column_name))
     columns_for_plot <- columns_for_plot %>% setNames(rownames(null_column_name))
     columns_for_plot <- c(rownames_for_plot, columns_for_plot)
@@ -309,39 +311,49 @@ fin_dataframe <- expand.grid(fin_rownames, fin_colnames) %>% as.data.frame() %>%
 
 bio_catgs <- as.vector(unique(all_data_sub$biomarker_category))
 bio_catgs_num <- c(8,9,3,6,3)
+mol <- c("Genetics/\nGenomics", "Epigenetics/\nEpigenomics", "Transcriptomics", "Metabolomics", "Proteomics", "Microbiomics/\nMicrobiology", "Biochemistry", "Other molecular biomarker")
+cel <- c("Histology", "Cytology", "Other cellular biomarker")
+img <- c("X-Rays", "Ultrasound", "CT Scan", "PET/\nSPECT", "Spectrometry", "MRI", "Scintigraphy (Gamma)", "Mammography", "Other imaging biomarker")
+phy <- c("Blood Pressure", "Ankle-brachial Index", "ECG", "EEG", "Electro- myography", "Other physiological biomarker")
+ant <- c("BMI", "Body perimeters", "Other anthropometric biomarker")
+subs <- c("mol", "img", "ant", "phy", "cel")
+
 for(i in seq(1,5,1)){
   plot_data <- primary_data %>% mutate(biomarkers = paste(biomarker_category, biomarker_subcategory, sep = "_")) %>% 
     dplyr::select(covidence_id, biomarkers, cvd_type) %>% unique() %>%
     dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(biomarkers, cvd_type, sep = "_"))
   fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
   plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., biomarkers ~ cvd_type, value.var = "Freq") %>%
-    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") %>%
-    mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n"))
+    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") 
   plot_data <- plot_data %>% arrange(`Biomarker Category`, `Biomarker Subcategory`) %>% filter(`Biomarker Category` == bio_catgs[i]) %>%
-    dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames))
+    dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames)) %>%
+    mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n")) %>% 
+    mutate(`Biomarker Subcategory` = factor(`Biomarker Subcategory`, levels = get(subs[i]))) %>% arrange(`Biomarker Subcategory`)
   null_columns <- plot_data %>% dplyr::select(-c(`Biomarker Category`, `Biomarker Subcategory`)) %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
   table_n_col(plot_data, null_column_name = null_columns, should_group = T, group_by_colname = "Biomarker Category", table_width = 1800, 
               num_colors = bio_catgs_num[i], output_name = paste(bio_catgs[i], "_sub_disease_primary", sep =""))
 }
-  
 
 #secondary
+  
 for(i in seq(1,5,1)){
   plot_data <- secondary_data %>% mutate(biomarkers = paste(biomarker_category, biomarker_subcategory, sep = "_")) %>% 
     dplyr::select(covidence_id, biomarkers, cvd_type) %>% unique() %>%
     dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(biomarkers, cvd_type, sep = "_"))
   fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
   plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., biomarkers ~ cvd_type, value.var = "Freq") %>%
-    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") %>%
-    mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n"))
-  plot_data <- plot_data %>% arrange(`Biomarker Category`, `Biomarker Subcategory`) %>% filter(`Biomarker Category` == bio_catgs[i]) %>%
-    dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames))
+    separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") %>% 
+    filter(`Biomarker Category` == bio_catgs[i]) %>%
+    dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames)) %>%
+    mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n")) %>% 
+    mutate(`Biomarker Subcategory` = factor(`Biomarker Subcategory`, levels = get(subs[i]))) %>% arrange(`Biomarker Subcategory`)
   null_columns <- plot_data %>% dplyr::select(-c(`Biomarker Category`, `Biomarker Subcategory`)) %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
   table_n_col(plot_data, null_column_name = null_columns, should_group = T, group_by_colname = "Biomarker Category", table_width = 1800,
               num_colors = bio_catgs_num[i], output_name = paste(bio_catgs[i], "_sub_disease_secondary", sep =""))
 }
+
 
 ```
 
@@ -354,7 +366,7 @@ x-axis = disease type
 ```{r}
 #primary
 fin_rownames <- all_data_sub %>% filter(primary_lifestyle_evaluated == "Yes") %>% dplyr::select(primary_lifestyle_factors_type)
-temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution"))
+temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution")) #without immunization
 fin_rownames <- rbind(fin_rownames, temp_data)
 fin_rownames <- as.vector(unique(fin_rownames$primary_lifestyle_factors_type)) %>% sort(.) #check all row names for table captured
 fin_colnames <- fin_colnames
@@ -369,9 +381,11 @@ plot_data <- primary_data %>% filter(primary_lifestyle_evaluated == "Yes") %>%
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(primary_lifestyle_factors_type, cvd_type, sep = "_"))
 fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
 plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., primary_lifestyle_factors_type ~ cvd_type, value.var = "Freq") %>%
+  mutate(primary_lifestyle_factors_type = factor(primary_lifestyle_factors_type, levels = c("Smoking", "Alcohol", "Obesity", "Exercise", "Diet", 
+                                                                                            "Air Pollution", "Preventive drugs", "Other lifestyle factors"))) %>%
+  arrange(primary_lifestyle_factors_type) %>%
   column_to_rownames("primary_lifestyle_factors_type")
 
-plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
 plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
@@ -391,7 +405,7 @@ color of bubble = biomarker category
 ```{r}
 #primary
 fin_rownames <- all_data_sub %>% filter(primary_lifestyle_evaluated == "Yes") %>% dplyr::select(primary_lifestyle_factors_type)
-temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution"))
+temp_data <- data.frame(primary_lifestyle_factors_type = c("Air Pollution")) # without immunization
 fin_rownames <- rbind(fin_rownames, temp_data)
 fin_rownames <- as.vector(unique(fin_rownames$primary_lifestyle_factors_type)) %>% sort(.) #check all row names for table captured
 fin_colnames <- fin_colnames
@@ -405,10 +419,6 @@ plot_data <- primary_data %>% filter(primary_lifestyle_evaluated == "Yes") %>%
   dplyr::select(-covidence_id) %>% mutate(match_column = paste(primary_lifestyle_factors_type, cvd_type, sep = "_"))
 fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
 plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column)
-
-plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
-plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
-
 
 plot_data <- plot_data %>% group_by(cvd_type, primary_lifestyle_factors_type, biomarker_category) %>% summarise(count = n()) %>%
   arrange(cvd_type, primary_lifestyle_factors_type, biomarker_category) %>%
@@ -425,10 +435,12 @@ plot_data <- plot_data %>% group_by(cvd_type, primary_lifestyle_factors_type, bi
                            biomarker_category == "Anthropometric" ~ 3.5,
                            TRUE ~ 1))
 plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c(".", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
-plot_data$cvd_type <- factor(plot_data$cvd_type, levels = fin_colnames)
+plot_data$cvd_type <- factor(plot_data$cvd_type, levels = fin_colnames) 
 
 pdf("data_analysis_results/lifestyle_disease_bubbleplot_primary.pdf", width = 18, height = 13)
 plot_data %>% mutate(primary_lifestyle_factors_type = str_replace(primary_lifestyle_factors_type, "/", "/\n")) %>% 
+  mutate(primary_lifestyle_factors_type = factor(primary_lifestyle_factors_type, levels = c("Smoking", "Alcohol", "Obesity", "Exercise","Diet",
+                                                                                            "Air Pollution", "Preventive drugs","Other lifestyle factors"))) %>%
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
   facet_grid(primary_lifestyle_factors_type ~ cvd_type, switch = "y", 
              labeller = labeller(primary_lifestyle_factors_type = label_wrap_gen(11), cvd_type = label_wrap_gen(14))) + 
@@ -460,8 +472,10 @@ x-axis = disease type
 color of bubble = biomarker category
 
 ```{r}
+pop <- c("General", "Smoking", "Alcohol", "Diabetes", "Obesity", "Kidney failure/\nCKD", "High-risk CVD", "Hypertension", "Cholesterol/\nDyslipidaemia")
 #primary
-pdf("data_analysis_results/population_disease_bubbleplot_primary.pdf", width = 18, height = 13)
+
+pdf("data_analysis_results/population_disease_bubbleplot_primary.pdf", width = 18, height = 15)
 
 fin_rownames <- secondary_data %>% dplyr::select(population_type)
 fin_rownames <- as.vector(unique(fin_rownames$population_type)) %>% sort(.) #check all row names for table captured
@@ -475,9 +489,6 @@ plot_data <- primary_data %>% dplyr::select(covidence_id, biomarker_category, cv
   dplyr::select(-covidence_id) %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
 fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
 plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column)
-
-plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
-plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
 
 
 plot_data <- plot_data %>% group_by(cvd_type, population_type, biomarker_category) %>% summarise(count = n()) %>%
@@ -497,6 +508,7 @@ plot_data <- plot_data %>% group_by(cvd_type, population_type, biomarker_categor
 plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c(".", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
 plot_data$cvd_type <- factor(plot_data$cvd_type, levels = fin_colnames)
 plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n")) %>% 
+  mutate(population_type = factor(population_type, levels = pop)) %>%
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
   facet_grid(population_type ~ cvd_type, switch = "y", 
              labeller = labeller(population_type = label_wrap_gen(11), cvd_type = label_wrap_gen(14))) + 
@@ -519,15 +531,13 @@ plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n"))
          size = guide_legend(order = 2))
 dev.off()
 
+
 #secondary
-pdf("data_analysis_results/population_disease_bubbleplot_secondary.pdf", width = 18, height = 13)
+pdf("data_analysis_results/population_disease_bubbleplot_secondary.pdf", width = 18, height = 15)
 plot_data <- secondary_data %>% dplyr::select(covidence_id, biomarker_category, cvd_type, population_type) %>% unique() %>%
   dplyr::select(-covidence_id) %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
 fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
 plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column)
-
-plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
-plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
 
 
 plot_data <- plot_data %>% group_by(cvd_type, population_type, biomarker_category) %>% summarise(count = n()) %>%
@@ -547,6 +557,7 @@ plot_data <- plot_data %>% group_by(cvd_type, population_type, biomarker_categor
 plot_data$biomarker_category <- factor(plot_data$biomarker_category, levels = c(".", "Molecular", "Cellular", "Imaging", "Physiological", "Anthropometric"))
 plot_data$cvd_type <- factor(plot_data$cvd_type, levels = fin_colnames)
 plot_data %>% mutate(population_type = str_replace(population_type, "/", "/\n")) %>% 
+  mutate(population_type = factor(population_type, levels = pop)) %>%
   ggplot(aes(x = xcord, y = ycord, size = count, colour = biomarker_category, fill = biomarker_category)) + geom_point(shape = 21) +
   facet_grid(population_type ~ cvd_type, switch = "y", 
              labeller = labeller(population_type = label_wrap_gen(11), cvd_type = label_wrap_gen(14))) + 
@@ -590,9 +601,11 @@ fin_dataframe <- expand.grid(fin_rownames, fin_colnames) %>% as.data.frame() %>%
 plot_data <- primary_data %>% dplyr::select(covidence_id, population_type, cvd_type) %>% unique() %>%
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
 fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
-plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., population_type ~ cvd_type, value.var = "Freq") %>% column_to_rownames("population_type")
+plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., population_type ~ cvd_type, value.var = "Freq") %>%
+  mutate(population_type = str_replace(population_type, "/", "/\n")) %>% 
+  mutate(population_type = factor(population_type, levels = pop)) %>% arrange(population_type) %>%
+  column_to_rownames("population_type")
 
-plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
 plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
@@ -608,9 +621,11 @@ table_n_col(data = plot_data, null_column_name =  null_columns,  should_group = 
 plot_data <- secondary_data %>% dplyr::select(covidence_id, population_type, cvd_type) %>% unique() %>%
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame() %>% mutate(match_column = paste(population_type, cvd_type, sep = "_"))
 fin_dataframe_sub <- fin_dataframe %>% filter(!match_column %in% plot_data$match_column)
-plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., population_type ~ cvd_type, value.var = "Freq") %>% column_to_rownames("population_type")
+plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., population_type ~ cvd_type, value.var = "Freq") %>%
+  mutate(population_type = str_replace(population_type, "/", "/\n")) %>% 
+  mutate(population_type = factor(population_type, levels = pop)) %>% arrange(population_type) %>%
+  column_to_rownames("population_type")
 
-plot_data <- plot_data[order(match(rownames(plot_data), fin_rownames)), , drop = FALSE]
 plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = FALSE]
 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
@@ -663,7 +678,6 @@ null_columns <- plot_data %>% colSums() %>% as.data.frame() %>%
 
 table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 4, 
             table_name = "Novel technology vs \n CVDs", output_name = "novel_tech_disease_secondary" )
-
 ```
 
 
@@ -672,8 +686,11 @@ y-axis = study design
 x-axis = disease type
 
 ```{r}
+study <- c("Umbrella/\nSystematic review", "Randomized control trial", "Cohort study", "Case-control study", "Cross-sectional study")
 #primary
 plot_data <- primary_data %>% dplyr::select(covidence_id, study_design_type, cvd_type) %>% unique() %>%
+  mutate(study_design_type = str_replace(study_design_type, "/", "/\n")) %>%
+  mutate(study_design_type = factor(study_design_type, levels = study)) %>%
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame.matrix() %>% dplyr::select(all_of(fin_colnames))
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
@@ -682,6 +699,8 @@ table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_
 
 #secondary
 plot_data <- secondary_data %>% dplyr::select(covidence_id, study_design_type, cvd_type) %>% unique() %>%
+  mutate(study_design_type = str_replace(study_design_type, "/", "/\n")) %>%
+  mutate(study_design_type = factor(study_design_type, levels = study)) %>%
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame.matrix() %>% dplyr::select(all_of(fin_colnames))
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
