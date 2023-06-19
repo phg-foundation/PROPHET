@@ -232,10 +232,10 @@ primary_data_final <- primary_data %>%
   full_join(primary_data_cols, by = "covidence_id") %>%
   full_join(primary_data_rows, by = "covidence_id") %>%
   mutate(across(where(is.character), str_trim)) %>%
-  dplyr::select(covidence_id:ref, mendelian_randomization, AI, technology, clinical_utility, Rows, Columns, study_design_type, biomarker_name) %>%
-  setNames(c("Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", "Issue", "Pages", "DOI", "Ref", 
-             "Mendelian randomization", "Artificial intelligence", "Wearable technology", "Clinical utility", "Rows", "Columns",
-             "Study design", "Biomarker examples"))
+  dplyr::select(Rows, Columns, study_design_type, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility) %>%
+  setNames(c("Rows", "Columns", "Study design", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Clinical utility"))
 
 primary_data_final <- primary_data_final %>% 
   mutate(`Biomarker examples` = str_replace_all(`Biomarker examples`, ",", " &")) # replace any commas in biomarker names
@@ -303,10 +303,10 @@ secondary_data_final <- secondary_data %>%
   full_join(secondary_data_cols, by = "covidence_id") %>%
   full_join(secondary_data_rows, by = "covidence_id") %>%
   mutate(across(where(is.character), str_trim)) %>%
-  dplyr::select(covidence_id:ref, mendelian_randomization, AI, technology, clinical_utility, Rows, Columns, study_design_type, biomarker_name) %>%
-  setNames(c("Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", "Issue", "Pages", "DOI", "Ref", 
-             "Mendelian randomization", "Artificial intelligence", "Wearable technology", "Clinical utility", "Rows", "Columns",
-             "Study design", "Biomarker examples"))
+  dplyr::select(Rows, Columns, study_design_type, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility) %>%
+  setNames(c("Rows", "Columns", "Study design", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Clinical utility"))
 
 secondary_data_final <- secondary_data_final %>% 
   mutate(`Biomarker examples` = str_replace_all(`Biomarker examples`, ",", " &")) # replace any commas in biomarker names
@@ -422,11 +422,11 @@ primary_data_final_bio <- primary_data %>%
   full_join(primary_data_bio_filter, by = "covidence_id") %>%
   full_join(primary_data_lifestyle_filter, by = "covidence_id") %>%
   mutate(across(where(is.character), str_trim)) %>%
-  dplyr::select(covidence_id:ref, mendelian_randomization, AI, technology, clinical_utility, study_design_type, family_history, lifestyle, bio_subs,
-                Rows, Columns, biomarkers, biomarker_name) %>%
-  setNames(c("Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", "Issue", "Pages", "DOI", "Ref", 
-             "Mendelian randomization", "Artificial intelligence", "Wearable technology", "Clinical utility", "Study design", "Family history", 
-             "Lifestyle factors", "Biomarker subcategories", "Rows", "Columns", "Biomarker category", "Biomarker examples"))
+  dplyr::select(Rows, Columns, biomarkers, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility, 
+                study_design_type, family_history, lifestyle, bio_subs) %>%
+  setNames(c("Rows", "Columns", "Biomarker category", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Clinical utility", "Study design", "Family history", "Lifestyle factors", "Biomarker subcategories"))
 
 primary_data_final_bio <- primary_data_final_bio %>% 
   mutate(`Biomarker examples` = str_replace_all(`Biomarker examples`, ",", " &")) # replace any commas in biomarker names
@@ -522,11 +522,11 @@ secondary_data_final_bio <- secondary_data %>%
   full_join(secondary_data_segments, by = "covidence_id") %>%
   full_join(secondary_data_bio_filter, by = "covidence_id") %>%
   mutate(across(where(is.character), str_trim)) %>%
-  dplyr::select(covidence_id:ref, mendelian_randomization, AI, technology, clinical_utility, study_design_type, family_history, bio_subs,
-                Rows, Columns, biomarkers, biomarker_name) %>%
-  setNames(c("Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", "Issue", "Pages", "DOI", "Ref", 
-             "Mendelian randomization", "Artificial intelligence", "Wearable technology", "Clinical utility", "Study design", "Family history", 
-             "Biomarker subcategories", "Rows", "Columns", "Biomarker category", "Biomarker examples"))
+  dplyr::select(Rows, Columns, biomarkers, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility, 
+                study_design_type, family_history, bio_subs) %>%
+  setNames(c("Rows", "Columns", "Biomarker category", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Wearable technology", 
+             "Clinical utility", "Study design", "Family history", "Biomarker subcategories"))
 
 secondary_data_final_bio <- secondary_data_final_bio %>% 
   mutate(`Biomarker examples` = str_replace_all(`Biomarker examples`, ",", " &")) # replace any commas in biomarker names
