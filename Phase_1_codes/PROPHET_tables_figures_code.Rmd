@@ -185,34 +185,13 @@ Functions to make tables
 
 ```{r}
 
-table_n_col <- function(data, null_column_name, should_group, group_by_colname, table_width, num_colors, table_name, output_name){
-  colour_plot <- colorRampPalette(brewer.pal(9, "Blues"))(num_colors)[1]
-  
-  if(should_group == T){
-    columns_for_plot <- rep(list(colDef(align = "center", 
-                                        cell = color_tiles(plot_data, colors = colour_plot))), nrow(null_column_name))
-    columns_for_plot <- columns_for_plot %>% setNames(rownames(null_column_name))
-    to_save <- reactable(data, groupBy = group_by_colname,
-                       defaultColDef = colDef(align = "center", 
-                                              cell = color_tiles(data, 
-                                                                 colors = colorRampPalette(brewer.pal(9, "Blues"))(num_colors))),
-                       defaultPageSize = 50,
-                       width = table_width,
-                       searchable = F,
-                       striped = F,
-                       highlight = F,
-                       bordered = TRUE,
-                       theme = reactableTheme(
-                         borderColor = "grey30",
-                         cellPadding = "8px 12px",
-                         headerStyle = list(backgroundColor = "#2F6687", color = "white", borderColor = "white"),
-                         style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif",
-                                      fontSize = "18px")),
-                       columns = columns_for_plot)
-  } else {
-    rownames_for_plot <- list(.rownames = colDef(name = table_name,
+table_n_col <- function(data, null_column_name, table_width, num_colors, output_name){
+    colour_plot <- colorRampPalette(brewer.pal(9, "Blues"))(num_colors)[1]
+    rownames_for_plot <- list(.rownames = colDef(name = "table_name",
+                                                 headerStyle = list(backgroundColor = "white", borderColor = "white"),
                                                  style = list(backgroundColor = "#2F6687",
                                                               color = "white",
+                                                              borderColor = "white",
                                                               fontWeight = "600")))
     columns_for_plot <- rep(list(colDef(align = "center",  
                                         cell = color_tiles(plot_data, colors = colour_plot))), nrow(null_column_name))
@@ -220,6 +199,7 @@ table_n_col <- function(data, null_column_name, should_group, group_by_colname, 
     columns_for_plot <- c(rownames_for_plot, columns_for_plot)
         to_save <- reactable(data,
                        defaultColDef = colDef(align = "center",
+                                              style = cell_style(border_color = "grey30"),
                                               cell = color_tiles(data, 
                                                                  colors = colorRampPalette(brewer.pal(9, "Blues"))(num_colors))),
                        defaultPageSize = 50,
@@ -229,13 +209,12 @@ table_n_col <- function(data, null_column_name, should_group, group_by_colname, 
                        highlight = F,
                        bordered = TRUE,
                        theme = reactableTheme(
-                         borderColor = "grey30",
                          cellPadding = "8px 12px",
                          headerStyle = list(backgroundColor = "#2F6687", color = "white", borderColor = "white"),
                          style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif",
                                       fontSize = "18px")),
-                       columns = columns_for_plot)
-  }
+                       columns = columns_for_plot
+                       )
   saveWidget(to_save, file = paste("data_analysis_results/", output_name, ".html", sep = ""))
   webshot(url = paste("data_analysis_results/", output_name, ".html", sep = ""), file = paste("data_analysis_results/", output_name, ".pdf", sep = ""))
 }
@@ -270,11 +249,9 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(data = plot_data, null_column_name =  null_columns,  should_group = F, table_width = 1700, num_colors = 5, 
-            table_name = "Biomarkers vs \n CVDs", output_name = "biomarker_disease_primary")
+table_n_col(data = plot_data, null_column_name =  null_columns,  table_width = 1700, 
+            num_colors = 5, output_name = "biomarker_disease_primary")
 ##might not always print correctly - please do control+P of the html page produced to save as pdf
-
-
 
 #secondary
 plot_data <- secondary_data %>% dplyr::select(covidence_id, biomarker_category, cvd_type) %>% unique() %>%
@@ -288,8 +265,8 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(data = plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 5, 
-            table_name = "Biomarkers vs \n CVDs", output_name = "biomarker_disease_secondary")
+table_n_col(data = plot_data, null_column_name = null_columns, table_width = 1700, 
+            num_colors = 5, output_name = "biomarker_disease_secondary")
 ```
 
 
@@ -326,15 +303,15 @@ for(i in seq(1,5,1)){
   plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., biomarkers ~ cvd_type, value.var = "Freq") %>%
     separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") 
   plot_data <- plot_data %>% arrange(`Biomarker Category`, `Biomarker Subcategory`) %>% filter(`Biomarker Category` == bio_catgs[i]) %>%
-    dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames)) %>%
+    dplyr::select(`Biomarker Subcategory`, all_of(fin_colnames)) %>%
     mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n")) %>% 
     mutate(`Biomarker Subcategory` = factor(`Biomarker Subcategory`, levels = get(subs[i]))) %>% arrange(`Biomarker Subcategory`)
-  null_columns <- plot_data %>% dplyr::select(-c(`Biomarker Category`, `Biomarker Subcategory`)) %>% colSums() %>% as.data.frame() %>% 
+  null_columns <- plot_data %>% dplyr::select(-`Biomarker Subcategory`) %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
-  table_n_col(plot_data, null_column_name = null_columns, should_group = T, group_by_colname = "Biomarker Category", table_width = 1800, 
+  colnames(plot_data)[1] <- paste(bio_catgs[i], "biomarkers", sep = " ") 
+  table_n_col(plot_data, null_column_name = null_columns, table_width = 1800,
               num_colors = bio_catgs_num[i], output_name = paste(bio_catgs[i], "_sub_disease_primary", sep =""))
 }
-
 #secondary
   
 for(i in seq(1,5,1)){
@@ -345,16 +322,15 @@ for(i in seq(1,5,1)){
   plot_data <- rbind(plot_data, fin_dataframe_sub) %>% dplyr::select(-match_column) %>% dcast(., biomarkers ~ cvd_type, value.var = "Freq") %>%
     separate(biomarkers, into = c("Biomarker Category", "Biomarker Subcategory"), sep = "_") %>% 
     filter(`Biomarker Category` == bio_catgs[i]) %>%
-    dplyr::select(`Biomarker Category`, `Biomarker Subcategory`, all_of(fin_colnames)) %>%
+    dplyr::select(`Biomarker Subcategory`, all_of(fin_colnames)) %>%
     mutate(`Biomarker Subcategory` = str_replace(`Biomarker Subcategory`, "/", "/\n")) %>% 
     mutate(`Biomarker Subcategory` = factor(`Biomarker Subcategory`, levels = get(subs[i]))) %>% arrange(`Biomarker Subcategory`)
-  null_columns <- plot_data %>% dplyr::select(-c(`Biomarker Category`, `Biomarker Subcategory`)) %>% colSums() %>% as.data.frame() %>% 
+  null_columns <- plot_data %>% dplyr::select(-`Biomarker Subcategory`) %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
-  table_n_col(plot_data, null_column_name = null_columns, should_group = T, group_by_colname = "Biomarker Category", table_width = 1800,
+  colnames(plot_data)[1] <- paste(bio_catgs[i], "biomarkers", sep = " ") 
+  table_n_col(plot_data, null_column_name = null_columns, table_width = 1800,
               num_colors = bio_catgs_num[i], output_name = paste(bio_catgs[i], "_sub_disease_secondary", sep =""))
 }
-
-
 ```
 
 
@@ -391,8 +367,8 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 9, 
-            table_name = "Lifestyle factors vs \n CVDs", output_name = "lifestyle_disease_primary" )
+table_n_col(plot_data, null_column_name = null_columns, table_width = 1700, 
+            num_colors = 9, output_name = "lifestyle_disease_primary")
 ```
 
 
@@ -611,8 +587,8 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(data = plot_data, null_column_name =  null_columns,  should_group = F, table_width = 1700, num_colors = 5, 
-            table_name = "Population vs \n CVDs", output_name = "population_disease_primary")
+table_n_col(data = plot_data, null_column_name =  null_columns, table_width = 1700, 
+            num_colors = 5, output_name = "population_disease_primary")
 ##might not always print correctly - please do control+P of the html page produced to save as pdf
 
 
@@ -631,8 +607,8 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)), drop = 
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(data = plot_data, null_column_name =  null_columns,  should_group = F, table_width = 1700, num_colors = 5, 
-            table_name = "Population vs \n CVDs", output_name = "population_disease_secondary")
+table_n_col(data = plot_data, null_column_name =  null_columns,  table_width = 1700, 
+            num_colors = 5, output_name = "population_disease_secondary")
 ```
 
 Create table format: 
@@ -660,8 +636,8 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)),drop = F
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 4, 
-            table_name = "Novel technology vs \n CVDs", output_name = "novel_tech_disease_primary" )
+table_n_col(plot_data, null_column_name = null_columns, table_width = 1700, 
+            num_colors = 4, output_name = "novel_tech_disease_primary")
 
 
 #secondary
@@ -676,8 +652,9 @@ plot_data <- plot_data[,order(match(colnames(plot_data), fin_colnames)),drop = F
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
 
-table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 4, 
-            table_name = "Novel technology vs \n CVDs", output_name = "novel_tech_disease_secondary" )
+table_n_col(plot_data, null_column_name = null_columns, table_width = 1700, 
+            num_colors = 4, output_name = "novel_tech_disease_secondary")
+
 ```
 
 
@@ -694,8 +671,8 @@ plot_data <- primary_data %>% dplyr::select(covidence_id, study_design_type, cvd
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame.matrix() %>% dplyr::select(all_of(fin_colnames))
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
-table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 5, 
-            table_name = "Study design vs \n CVDs", output_name = "study_disease_primary" )
+table_n_col(plot_data, null_column_name = null_columns, table_width = 1700, 
+            num_colors = 5, output_name = "study_disease_primary")
 
 #secondary
 plot_data <- secondary_data %>% dplyr::select(covidence_id, study_design_type, cvd_type) %>% unique() %>%
@@ -704,8 +681,8 @@ plot_data <- secondary_data %>% dplyr::select(covidence_id, study_design_type, c
   dplyr::select(-covidence_id) %>% table(.) %>% as.data.frame.matrix() %>% dplyr::select(all_of(fin_colnames))
 null_columns <- plot_data %>% colSums() %>% as.data.frame() %>% 
   setNames("zeros") %>% filter(zeros == 0)
-table_n_col(plot_data, null_column_name = null_columns, should_group = F, table_width = 1700, num_colors = 5, 
-            table_name = "Study design vs \n CVDs", output_name = "study_disease_secondary" )
+table_n_col(plot_data, null_column_name = null_columns, table_width = 1700, 
+            num_colors = 5, output_name = "study_disease_secondary")
 ```
 
 #C.Erady
