@@ -9,7 +9,7 @@ R codes for formatting data downloaded from [covidence]([url](https://www.covide
 __cvd_for_eppimapper.Rmd:__
 
 R codes for part of the pipeine to generate evidence maps using [Eppi-Mapper]([url](https://eppi.ioe.ac.uk/cms/Default.aspx?tabid=3790)) are provided.
-Eppi-mapper requires JSON formatted data files.
+Eppi-Mapper requires JSON formatted data files.
 PYTHON code (to be linked) was used to create these JSON files. 
 R codes for formatting data (downloaded from Covidence) to be compatible with the PYTHON code are presented here.
 
