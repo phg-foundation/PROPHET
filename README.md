@@ -15,6 +15,6 @@ R codes for formatting data (downloaded from Covidence) to be compatible with th
 
 __EGMs__
 
-HTML files for evidence gap maps (EGMs) generated using [Eppi-Mapper](https://eppi.ioe.ac.uk/cms/Default.aspx?tabid=3790)
+HTML files for evidence gap maps (EGMs) generated using Eppi-Mapper.
 These EGMs capture research activity of primary and secondary prevention biomarkers in cardiovascular diseases.
 
