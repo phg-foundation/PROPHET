@@ -176,7 +176,7 @@ rm(all_data_1, all_data_2)
 #####################################################################################################################################################
 
 
-#PRIMARY DATA Biomarker category + subcategory vs Disease + population/lifestyle factors
+#PRIMARY DATA Biomarker category + subcategory vs Disease + population
 Segmented by study design
 
 Create rows using format: Biomarker_Category_Subcategory -> comma separated if multiple
@@ -200,12 +200,8 @@ Create columns using format: CVD_disease_lifestyle+population
 ```{r}
 #matches between lifestyle and population type are for: smoking, alcohol consumption (but written as alcohol under lifestyle) & obesity 
 primary_data_cols <- primary_data %>%
-  mutate(lifestyle_corrected = if_else(is.na(primary_lifestyle_factors_type) == T, "NaN", primary_lifestyle_factors_type),
-         family_corrected = if_else(family_history == "Yes", "Family history", "NaN"),
-         lifestyle = paste(lifestyle_corrected, family_corrected, sep = ";"),
-         pop_and_lifestyle = if_else(lifestyle_corrected != population_type, 
-                                     paste(population_type, lifestyle, sep = ";"), 
-                                     paste(population_type)),
+  mutate(family_corrected = if_else(family_history == "Yes", "Family history", "NaN"),
+         pop_and_lifestyle = paste(population_type, family_corrected, sep = ";"),
          pop_and_lifestyle = str_replace_all(pop_and_lifestyle, ";NaN", "")) %>%
   separate_rows("pop_and_lifestyle", sep = ";") %>% 
   mutate(for_Columns = paste("Cardiovascular disease", cvd_type, pop_and_lifestyle, sep = "_")) %>%
@@ -226,7 +222,7 @@ primary_data_cols <- primary_data %>%
 Join data 
 
 ```{r}
-primary_data_final <- primary_data %>% 
+primary_data_final_population <- primary_data %>% 
   dplyr::select(covidence_id:ref, mendelian_randomization, AI, technology, clinical_utility, study_design_type, biomarker_name) %>%
   distinct() %>%
   full_join(primary_data_cols, by = "covidence_id") %>%
@@ -237,20 +233,91 @@ primary_data_final <- primary_data %>%
              "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Novel technology", 
              "Clinical utility"))
 
-primary_data_final <- primary_data_final %>% 
+primary_data_final_population <- primary_data_final_population %>% 
   mutate(`Biomarker examples` = str_replace_all(`Biomarker examples`, ",", " &")) # replace any commas in biomarker names
 
-any(primary_data_final == "") #check that there are no empty cells
+any(primary_data_final_population == "") #check that there are no empty cells
 ```
 
 write data into excel file
 
 ```{r}
-writexl::write_xlsx(primary_data_final, "final_files/data_cvd_primary_segment_study_design.xlsx", col_names = TRUE)
+writexl::write_xlsx(primary_data_final_population, "final_files/data_cvd_primary_population_segment_study_design.xlsx", col_names = TRUE)
 ```
 
 #####################################################################################################################################################
 
+#PRIMARY DATA Biomarker category + subcategory vs Disease + lifestyle factors
+Segmented by study design
+
+Create rows using format: Biomarker_Category_Subcategory -> comma separated if multiple
+```{r}
+primary_data_rows <- primary_data %>% 
+  mutate(biomarkers = paste("Biomarker", biomarker_category, biomarker_subcategory, sep = "_")) %>% 
+  dplyr::select(covidence_id, biomarkers) %>%
+  distinct() %>%
+  group_by(covidence_id) %>%
+  mutate(Rows = paste(biomarkers, collapse = ",")) %>%
+  ungroup() %>% 
+  mutate(Rows= gsub(",+", ",", Rows)) %>% 
+  mutate(Rows = sub(",$", "", sub("^,", "", Rows))) %>% 
+  mutate(Rows=str_replace_all(Rows, "\\.", " ")) %>% 
+  dplyr::select(covidence_id, Rows) %>%
+  distinct()
+
+```
+
+Create columns using format: CVD_disease_lifestyle+population
+```{r}
+#matches between lifestyle and population type are for: smoking, alcohol consumption (but written as alcohol under lifestyle) & obesity 
+primary_data_cols <- primary_data %>%
+  mutate(lifestyle_corrected = if_else(is.na(primary_lifestyle_factors_type) == T, "No lifestyle factors", primary_lifestyle_factors_type),
+         family_corrected = if_else(family_history == "Yes", "Family history", "NaN"),
+         lifestyle = paste(lifestyle_corrected, family_corrected, sep = ";"),
+         lifestyle = str_replace_all(lifestyle, ";NaN", "")) %>%
+  separate_rows("lifestyle", sep = ";") %>% 
+  mutate(for_Columns = paste("Cardiovascular disease", cvd_type, lifestyle, sep = "_")) %>%
+  dplyr::select(covidence_id, for_Columns) %>%
+  distinct() %>%
+  group_by(covidence_id) %>%
+  mutate(Columns = paste(for_Columns, collapse = ",")) %>%
+  ungroup() %>% 
+  mutate(Columns= gsub(",+", ",", Columns)) %>% 
+  mutate(Columns = sub(",$", "", sub("^,", "", Columns))) %>% 
+  mutate(Columns=str_replace_all(Columns, "\\.", " ")) %>% 
+  dplyr::select(covidence_id, Columns) %>%
+  distinct()
+
+```
+
+
+Join data 
+
+```{r}
+primary_data_final_lifestyle <- primary_data %>% 
+  dplyr::select(covidence_id:ref, mendelian_randomization, AI, technology, clinical_utility, study_design_type, biomarker_name) %>%
+  distinct() %>%
+  full_join(primary_data_cols, by = "covidence_id") %>%
+  full_join(primary_data_rows, by = "covidence_id") %>%
+  mutate(across(where(is.character), str_trim)) %>%
+  dplyr::select(Rows, Columns, study_design_type, covidence_id:ref, biomarker_name, mendelian_randomization, AI, technology, clinical_utility) %>%
+  setNames(c("Rows", "Columns", "Study design", "Covidence_ID", "Title", "Authors", "Abstract", "Published Year", "Journal", "Volume", 
+             "Issue", "Pages", "DOI", "Ref", "Biomarker examples", "Mendelian randomization", "Artificial intelligence", "Novel technology", 
+             "Clinical utility"))
+
+primary_data_final_lifestyle <- primary_data_final_lifestyle %>% 
+  mutate(`Biomarker examples` = str_replace_all(`Biomarker examples`, ",", " &")) # replace any commas in biomarker names
+
+any(primary_data_final_lifestyle == "") #check that there are no empty cells
+```
+
+write data into excel file
+
+```{r}
+writexl::write_xlsx(primary_data_final_lifestyle, "final_files/data_cvd_primary_lifestyle_segment_study_design.xlsx", col_names = TRUE)
+```
+
+#####################################################################################################################################################
 
 #SECONDARY DATA Biomarker category + subcategory vs Disease + population factors
 Segmented by study design
